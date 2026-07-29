@@ -123,7 +123,7 @@
     (function () {
         /* ── CONFIGURABLE ─────────────────────────────────────────── */
         var OPACITY       = 0.5;    // 0.0 – 1.0  (visibility of letters)
-        var SPEED         = 0.5;     // lower = slower, 1 = default, 2 = fast
+        var SPEED         = 0.26;     // lower = slower, 1 = default, 2 = fast
         var FONT_SIZE     = 16;      // px per character cell
         var COLOR         = '#00ff41'; // classic green
         var COL_WIDTH     = 1;       // each column occupies this many cells wide
@@ -143,7 +143,7 @@
         var stride; // total cells per logical column (width + gap)
         var totalSlots;
 
-        var chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        var chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポヰヱ';
 
         // states: 'idle' -> 'writing' -> 'waiting' -> 'erasing' -> 'idle'
         function makeCol(maxRow) {
