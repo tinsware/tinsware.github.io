@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tinsware.github.io/sitemap.xml
