@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="tinsware - all digital creations & entertainments">
+    <title>tinsware - There Is No Spoon</title>
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #ffffff;
+            font-family: Georgia, 'Times New Roman', Times, serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            overflow: hidden;
+        }
+
+        #matrix {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            width: 140px;
+            height: auto;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 52px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            margin-bottom: 12px;
+        }
+
+        .slogan {
+            font-size: 14px;
+            letter-spacing: 3px;
+            color: #888888;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+
+        .desc {
+            font-size: 17px;
+            color: #999999;
+            line-height: 1.7;
+            max-width: 500px;
+            margin-bottom: 50px;
+        }
+
+        .links {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .links a {
+            color: #cccccc;
+            text-decoration: none;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding-bottom: 2px;
+            border-bottom: 1px solid #333333;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        .links a:hover {
+            color: #ffffff;
+            border-color: #ffffff;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 30px;
+            font-size: 11px;
+            color: #444444;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    <div class="content">
+        <img src="logo.jpg" alt="tinsware" class="logo">
+        <h1>tinsware</h1>
+        <p class="slogan">there is no spoon</p>
+        <p class="desc">all digital creations & entertainments</p>
+        <div class="links">
+            <a href="https://github.com/tinsware" target="_blank">github</a>
+            <a href="https://discord.gg/LINKINI-YAZ" target="_blank">discord</a>
+            <a href="mailto:contact@tinsware.com">contact</a>
+        </div>
+    </div>
+    <div class="footer">&copy; 2026 tinsware</div>
+
+    <script>
+    (function () {
+        /* ── CONFIGURABLE ─────────────────────────────────────────── */
+        var OPACITY       = 0.5;    // 0.0 – 1.0  (visibility of letters)
+        var SPEED         = 0.5;     // lower = slower, 1 = default, 2 = fast
+        var FONT_SIZE     = 16;      // px per character cell
+        var COLOR         = '#00ff41'; // classic green
+        var COL_WIDTH     = 1;       // each column occupies this many cells wide
+        var COL_GAP       = 1;       // empty cells between columns
+        var TRAIL_MIN     = 8;       // min rows a column writes before stopping
+        var TRAIL_MAX     = 35;      // max rows a column writes before stopping
+        var ERASE_DELAY   = 30;      // frames to wait after writing before erasing
+        var ERASE_SPEED   = 1;       // rows erased per frame (fade-out cursor speed)
+        var FADE_STEPS    = 5;       // how many steps to fully fade out a cell
+        var FADE_IN_STEPS = 5;       // how many steps to fully fade in a new cell
+        /* ──────────────────────────────────────────────────────────── */
+
+        var canvas = document.getElementById('matrix');
+        var ctx    = canvas.getContext('2d');
+
+        var cols = [];
+        var stride; // total cells per logical column (width + gap)
+        var totalSlots;
+
+        var chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        // states: 'idle' -> 'writing' -> 'waiting' -> 'erasing' -> 'idle'
+        function makeCol(maxRow) {
+            var trailLen = TRAIL_MIN + Math.floor(Math.random() * (TRAIL_MAX - TRAIL_MIN + 1));
+            trailLen = Math.min(trailLen, maxRow);
+            return {
+                state: 'idle',
+                writePos: 0,
+                trailLen: trailLen,
+                erasePos: 0,
+                waitTimer: 0,
+                cells: [],    // stored characters per row
+                fadeIn: [],   // fade-in level per row (0 up to FADE_IN_STEPS)
+                fade: []      // fade-out level per row (FADE_STEPS down to 0)
+            };
+        }
+
+        function resize() {
+            canvas.width  = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stride = COL_WIDTH + COL_GAP;
+            var totalCells = Math.floor(canvas.width / FONT_SIZE);
+            totalSlots = Math.floor(totalCells / stride);
+            var maxRow = Math.floor(canvas.height / FONT_SIZE);
+
+            cols = [];
+            for (var i = 0; i < totalSlots; i++) {
+                var c = makeCol(maxRow);
+                // stagger start
+                c.state = 'idle';
+                cols.push(c);
+            }
+        }
+
+        function randChar() {
+            return chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        function draw() {
+            var maxRow = Math.floor(canvas.height / FONT_SIZE);
+            ctx.font = FONT_SIZE + 'px monospace';
+
+            for (var i = 0; i < totalSlots; i++) {
+                var c = cols[i];
+                var x = i * stride * FONT_SIZE;
+
+                if (c.state === 'idle') {
+                    if (Math.random() < 0.01) {
+                        c.state = 'writing';
+                        c.writePos = 0;
+                        c.erasePos = 0;
+                        c.waitTimer = 0;
+                        c.trailLen = TRAIL_MIN + Math.floor(Math.random() * (TRAIL_MAX - TRAIL_MIN + 1));
+                        c.trailLen = Math.min(c.trailLen, maxRow);
+                        c.cells = [];
+                        c.fadeIn = [];
+                    }
+                    continue;
+                }
+
+                if (c.state === 'writing') {
+                    // add new character with fade-in starting at 1
+                    var ch = randChar();
+                    c.cells.push(ch);
+                    c.fadeIn.push(1);
+                    c.writePos++;
+
+                    // redraw all cells that are still fading in
+                    for (var fi = 0; fi < c.cells.length; fi++) {
+                        if (c.fadeIn[fi] >= FADE_IN_STEPS) continue;
+                        var fiy = (fi + 1) * FONT_SIZE;
+                        // clear cell
+                        ctx.fillStyle = '#0a0a0a';
+                        ctx.globalAlpha = 1.0;
+                        ctx.fillRect(x - 1, fiy - FONT_SIZE, FONT_SIZE + 2, FONT_SIZE + 2);
+                        // draw at current fade-in alpha
+                        var inAlpha = OPACITY * (c.fadeIn[fi] / FADE_IN_STEPS);
+                        ctx.fillStyle = COLOR;
+                        ctx.globalAlpha = inAlpha;
+                        ctx.fillText(c.cells[fi], x, fiy);
+                        ctx.globalAlpha = 1.0;
+                        c.fadeIn[fi]++;
+                    }
+
+                    if (c.writePos >= c.trailLen) {
+                        c.state = 'waiting';
+                        c.waitTimer = 0;
+                    }
+                    continue;
+                }
+
+                if (c.state === 'waiting') {
+                    c.waitTimer++;
+                    if (c.waitTimer >= ERASE_DELAY) {
+                        c.state = 'erasing';
+                        c.erasePos = 0;
+                    }
+                    continue;
+                }
+
+                if (c.state === 'erasing') {
+                    // advance the fade cursor
+                    for (var e = 0; e < ERASE_SPEED; e++) {
+                        if (c.erasePos < c.cells.length && c.fade[c.erasePos] === undefined) {
+                            c.fade[c.erasePos] = FADE_STEPS;
+                            c.erasePos++;
+                        }
+                    }
+
+                    // redraw all fading cells
+                    var allDone = true;
+                    for (var f = 0; f < c.cells.length; f++) {
+                        if (c.fade[f] === undefined) { allDone = false; continue; }
+                        if (c.fade[f] <= 0) continue;
+
+                        allDone = false;
+                        c.fade[f]--;
+
+                        var fy = (f + 1) * FONT_SIZE;
+                        // clear cell
+                        ctx.fillStyle = '#0a0a0a';
+                        ctx.globalAlpha = 1.0;
+                        ctx.fillRect(x - 1, fy - FONT_SIZE, FONT_SIZE + 2, FONT_SIZE + 2);
+
+                        // redraw at reduced opacity
+                        if (c.fade[f] > 0) {
+                            var fadeAlpha = OPACITY * (c.fade[f] / FADE_STEPS);
+                            ctx.fillStyle = COLOR;
+                            ctx.globalAlpha = fadeAlpha;
+                            ctx.fillText(c.cells[f], x, fy);
+                            ctx.globalAlpha = 1.0;
+                        }
+                    }
+
+                    if (allDone) {
+                        c.state = 'idle';
+                        c.cells = [];
+                        c.fade = [];
+                    }
+                }
+            }
+        }
+
+        resize();
+        window.addEventListener('resize', resize);
+
+        var interval = Math.round(50 / SPEED);
+        setInterval(draw, interval);
+    })();
+    </script>
+</body>
+</html>
