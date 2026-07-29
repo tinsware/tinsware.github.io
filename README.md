@@ -7,15 +7,10 @@ One-page branding site for **tinsware** with a matrix rain background animation.
 | File | Description |
 |------|-------------|
 | `index.html` | Single-file site (HTML + CSS + JS) |
-| `logo.jpg` | tinsware logo |
-| `matrix.otf` | Matrix Code NFI font for rain animation |
-
-## Deployment (GitHub Pages)
-
-1. Push this repo to GitHub.
-2. Go to **Settings > Pages**.
-3. Set source to the branch and root folder (`/`).
-4. Site will be live at `https://<username>.github.io/<repo-name>/`.
+| `logo.svg` | tinsware logo |
+| `favicon.ico` | Site favicon |
+| `sitemap.xml` | SEO sitemap |
+| `robots.txt` | Search engine crawler instructions |
 
 ## Customization
 
@@ -35,11 +30,3 @@ ERASE_SPEED   — Rows the erase cursor advances per frame
 FADE_STEPS    — Steps to fully fade out a cell
 FADE_IN_STEPS — Steps to fully fade in a new cell
 ```
-
-## Links to update
-
-In `index.html`, replace the placeholder values:
-
-- **Discord** — change `https://discord.gg/LINKINI-YAZ` to your invite link
-- **Contact** — change `mailto:contact@tinsware.com` to your email
-- **GitHub** — verify `https://github.com/tinsware` is correct
