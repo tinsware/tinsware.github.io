@@ -3,11 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0;url=https://discord.gg/N8N3VdByZ">
     <meta name="description" content="Redirecting to tinsware Discord">
     <title>tinsware - Discord</title>
     <link rel="icon" type="image/x-icon" href="../favicon.ico">
     <link rel="canonical" href="https://tinsware.github.io/discord/">
+    <script src="../links.js"></script>
+    <script>
+        (function () {
+            var url = window.TINS_DISCORD_INVITE;
+            var meta = document.createElement('meta');
+            meta.httpEquiv = 'refresh';
+            meta.content = '0;url=' + url;
+            document.head.appendChild(meta);
+            window.location.replace(url);
+        })();
+    </script>
     <style>
         * {
             margin: 0;
@@ -58,13 +68,13 @@
             border-color: #ffffff;
         }
     </style>
-    <script>
-        window.location.replace('https://discord.gg/N8N3VdByZ');
-    </script>
 </head>
 <body>
     <h1>discord</h1>
     <p>Redirecting to the tinsware Discord server&hellip;</p>
-    <p><a href="https://discord.gg/N8N3VdByZ">Continue to Discord</a></p>
+    <p><a id="discord-link" href="#">Continue to Discord</a></p>
+    <script>
+        document.getElementById('discord-link').href = window.TINS_DISCORD_INVITE;
+    </script>
 </body>
 </html>
