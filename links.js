@@ -1,1 +1,1 @@
-window.TINS_DISCORD_INVITE = 'https://discord.gg/N8N3VdByZ';
+window.TINS_DISCORD_INVITE = 'https://discord.gg/EDqpW3Uch6';
